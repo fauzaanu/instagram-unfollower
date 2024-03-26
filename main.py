@@ -1,3 +1,4 @@
+import logging
 import os
 from dotenv import load_dotenv
 from playwright.sync_api import Page
@@ -5,11 +6,19 @@ from playwright.sync_api import Page
 DEFAULT_TIMEOUT = 2000
 
 
+logging.basicConfig(level=logging.INFO)
+logging.info("Starting Instagram Unfollower Bot")
+
+
+
+
+
 def login(page: Page) -> None:
     """
     Logs into Instagram
     Ensure that the INSTAGRAM_USERNAME and INSTAGRAM_PASSWORD environment variables are set inside of a .env file or in the environment
     """
+    logging.info("Logging into Instagram")
     page.goto("https://www.instagram.com/")
     page.wait_for_timeout(DEFAULT_TIMEOUT)
 
@@ -27,6 +36,7 @@ def unfollow_cycle(page: Page, iterations=10) -> None:
     """
     Unfollows the first person in the "Following" list for the specified number of iterations
     """
+    logging.info("Starting Unfollow Cycle")
     visit_profile(page)
     following_link(page)
 
@@ -54,6 +64,7 @@ def unfollow_cycle(page: Page, iterations=10) -> None:
 
 def following_link(page: Page) -> None:
     # click the "Following" link
+    logging.info("Clicking Following")
     page.get_by_text("Following").click()
     page.wait_for_timeout(DEFAULT_TIMEOUT)
 
@@ -62,6 +73,7 @@ def not_now(page: Page) -> None:
     """
     Clicks the "Not Now" button incase it appears
     """
+    logging.info("Clicking Not Now")
     if page.query_selector("button:has-text('Not Now')"):
         page.get_by_text("Not Now").click()
         page.wait_for_timeout(DEFAULT_TIMEOUT)
@@ -71,8 +83,10 @@ def visit_profile(page: Page) -> None:
     """
     Visits the profile of the user
     """
-    page.goto(f"https://www.instagram.com/{os.environ['INSTAGRAM_USERNAME']}/")
-    page.wait_for_timeout(DEFAULT_TIMEOUT)
+    logging.info("Visiting Profile")
+    if page.url != f"https://www.instagram.com/{os.environ['INSTAGRAM_USERNAME']}/":
+        page.goto(f"https://www.instagram.com/{os.environ['INSTAGRAM_USERNAME']}/")
+        page.wait_for_timeout(DEFAULT_TIMEOUT)
 
 
 def whoami(page: Page) -> None:
@@ -80,10 +94,34 @@ def whoami(page: Page) -> None:
     checks if the user is logged in,
     if not logs in
     """
+    logging.info("Checking if user is logged in")
     if page.query_selector("button:has-text('Log In')"):
         login(page)
     else:
         visit_profile(page)
+
+
+def hey_admin(page: Page, text) -> None:
+    """
+    Sends a screenshot to admin through telegram botapi
+    """
+    logging.info("Sending status update to admin")
+    if page.url != f"https://www.instagram.com/{os.environ['INSTAGRAM_USERNAME']}/":
+        page.goto(f"https://www.instagram.com/{os.environ['INSTAGRAM_USERNAME']}/")
+        page.wait_for_timeout(DEFAULT_TIMEOUT)
+
+    page.screenshot(path="screenshot.png")
+    page.wait_for_timeout(DEFAULT_TIMEOUT)
+    import requests
+
+    requests.post(
+        f"https://api.telegram.org/bot{os.environ['TELEGRAM_BOT_TOKEN']}/sendPhoto",
+        data={
+            "chat_id": os.environ["TELEGRAM_CHAT_ID"],
+            "caption": text,
+        },
+        files={"photo": open("screenshot.png", "rb")},
+    )
 
 
 if __name__ == "__main__":
@@ -94,10 +132,12 @@ if __name__ == "__main__":
     with sync_playwright() as p:
         browser = p.chromium.launch_persistent_context(
             user_data_dir="instagram_unfollower",
-            headless=False,
+            headless=True,
         )
         page = browser.new_page()
         whoami(page)
         not_now(page)
-        unfollow_cycle(page, 10)
+        hey_admin(page, "Status update before unfollow cycle")
+        unfollow_cycle(page, 7)
+        hey_admin(page, "Status update after unfollow cycle")
         browser.close()
