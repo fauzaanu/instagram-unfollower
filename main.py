@@ -15,6 +15,7 @@ def login(page: Page) -> None:
     Ensure that the INSTAGRAM_USERNAME and INSTAGRAM_PASSWORD environment variables are set inside of a .env file or in the environment
     """
     logging.info("Logging into Instagram")
+    hey_admin(page, "Logging into Instagram", dont_nav=True)
     page.goto("https://www.instagram.com/")
     page.wait_for_timeout(DEFAULT_TIMEOUT)
 
@@ -28,6 +29,7 @@ def login(page: Page) -> None:
     page.get_by_label("Password").fill(os.environ["INSTAGRAM_PASSWORD"])
     page.get_by_role("button", name="Log in", exact=True).click()
     page.wait_for_timeout(DEFAULT_TIMEOUT * 5)
+    hey_admin(page, "Logged into Instagram, or did we?", dont_nav=True)
 
 
 def unfollow_cycle(page: Page, iterations=10) -> None:
@@ -35,6 +37,7 @@ def unfollow_cycle(page: Page, iterations=10) -> None:
     Unfollows the first person in the "Following" list for the specified number of iterations
     """
     logging.info("Starting Unfollow Cycle")
+    hey_admin(page, "Starting Unfollow Cycle", dont_nav=True)
     visit_profile(page)
     following_link(page)
 
@@ -46,6 +49,8 @@ def unfollow_cycle(page: Page, iterations=10) -> None:
         # click the "Unfollow" button
         page.get_by_role("button", name="Unfollow", exact=True).first.click()
         page.wait_for_timeout(DEFAULT_TIMEOUT * 5)
+
+        hey_admin(page, f"Unfollowed {i+1} people", dont_nav=True)
 
         # go back to home page
         page.goto("https://www.instagram.com/")
@@ -63,6 +68,7 @@ def unfollow_cycle(page: Page, iterations=10) -> None:
 def following_link(page: Page) -> None:
     # click the "Following" link
     logging.info("Clicking Following")
+    hey_admin(page, "Clicking Following", dont_nav=True)
     page.get_by_text("Following").click()
     page.wait_for_timeout(DEFAULT_TIMEOUT)
 
@@ -72,6 +78,7 @@ def not_now(page: Page) -> None:
     Clicks the "Not Now" button incase it appears
     """
     logging.info("Clicking Not Now")
+    hey_admin(page, "Clicking Not Now", dont_nav=True)
     if page.query_selector("button:has-text('Not Now')"):
         page.get_by_text("Not Now").click()
         page.wait_for_timeout(DEFAULT_TIMEOUT)
@@ -82,6 +89,7 @@ def visit_profile(page: Page) -> None:
     Visits the profile of the user
     """
     logging.info("Visiting Profile")
+    hey_admin(page, "Visiting Profile", dont_nav=True)
     if page.url != f"https://www.instagram.com/{os.environ['INSTAGRAM_USERNAME']}/":
         page.goto(f"https://www.instagram.com/{os.environ['INSTAGRAM_USERNAME']}/")
         page.wait_for_timeout(DEFAULT_TIMEOUT)
@@ -93,20 +101,22 @@ def whoami(page: Page) -> None:
     if not logs in
     """
     logging.info("Checking if user is logged in")
+    hey_admin(page, "Checking if user is logged in", dont_nav=True)
     if page.get_by_text("Log In"):
         login(page)
     else:
         visit_profile(page)
 
 
-def hey_admin(page: Page, text) -> None:
+def hey_admin(page: Page, text, dont_nav=False) -> None:
     """
     Sends a screenshot to admin through telegram botapi
     """
     logging.info("Sending status update to admin")
-    if page.url != f"https://www.instagram.com/{os.environ['INSTAGRAM_USERNAME']}/":
-        page.goto(f"https://www.instagram.com/{os.environ['INSTAGRAM_USERNAME']}/")
-        page.wait_for_timeout(DEFAULT_TIMEOUT)
+    if not dont_nav:
+        if page.url != f"https://www.instagram.com/{os.environ['INSTAGRAM_USERNAME']}/":
+            page.goto(f"https://www.instagram.com/{os.environ['INSTAGRAM_USERNAME']}/")
+            page.wait_for_timeout(DEFAULT_TIMEOUT)
 
     page.screenshot(path="screenshot.png")
     page.wait_for_timeout(DEFAULT_TIMEOUT)
