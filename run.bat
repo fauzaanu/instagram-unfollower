@@ -1,0 +1,1 @@
+"C:\Users\fauzaanu\AppData\Local\pypoetry\Cache\virtualenvs\wdgram-2iz2PXf6-py3.11\Scripts\python.exe" "main.py"
