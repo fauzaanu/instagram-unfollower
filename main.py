@@ -15,7 +15,6 @@ def login(page: Page) -> None:
     Ensure that the INSTAGRAM_USERNAME and INSTAGRAM_PASSWORD environment variables are set inside of a .env file or in the environment
     """
     logging.info("Logging into Instagram")
-    hey_admin(page, "Logging into Instagram", dont_nav=True)
     page.goto("https://www.instagram.com/")
     page.wait_for_timeout(DEFAULT_TIMEOUT)
 
@@ -27,6 +26,8 @@ def login(page: Page) -> None:
 
     page.get_by_label("Password").click()
     page.get_by_label("Password").fill(os.environ["INSTAGRAM_PASSWORD"])
+    hey_admin(page, "Logging into Instagram", dont_nav=True)
+
     page.get_by_role("button", name="Log in", exact=True).click()
     page.wait_for_timeout(DEFAULT_TIMEOUT * 5)
     hey_admin(page, "Logged into Instagram, or did we?", dont_nav=True)
@@ -100,6 +101,7 @@ def whoami(page: Page) -> None:
     checks if the user is logged in,
     if not logs in
     """
+    page.wait_for_timeout(DEFAULT_TIMEOUT*5)
     logging.info("Checking if user is logged in")
     hey_admin(page, "Checking if user is logged in", dont_nav=True)
     if page.get_by_text("Log In"):
