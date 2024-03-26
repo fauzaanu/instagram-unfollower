@@ -139,7 +139,7 @@ if __name__ == "__main__":
 
     with sync_playwright() as p:
         browser = p.chromium.launch_persistent_context(
-            user_data_dir="instagram_unfollower45",
+            user_data_dir="instagram_unfollower",
             headless=True,
         )
         page = browser.new_page()
