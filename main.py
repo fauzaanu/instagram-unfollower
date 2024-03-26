@@ -5,12 +5,8 @@ from playwright.sync_api import Page
 
 DEFAULT_TIMEOUT = 2000
 
-
 logging.basicConfig(level=logging.INFO)
 logging.info("Starting Instagram Unfollower Bot")
-
-
-
 
 
 def login(page: Page) -> None:
@@ -22,14 +18,16 @@ def login(page: Page) -> None:
     page.goto("https://www.instagram.com/")
     page.wait_for_timeout(DEFAULT_TIMEOUT)
 
-    page.get_by_label("Phone number, username, or").click()
-    page.get_by_label("Phone number, username, or").fill(os.environ["INSTAGRAM_USERNAME"])
+    # an input element with the name "username" is the username field
+    # there is no label as it is EU
+    page.get_by_label("Phone number, username, or email").click()
+    page.get_by_label("Phone number, username, or email").fill(os.environ["INSTAGRAM_USERNAME"])
     page.wait_for_timeout(DEFAULT_TIMEOUT)
 
     page.get_by_label("Password").click()
     page.get_by_label("Password").fill(os.environ["INSTAGRAM_PASSWORD"])
     page.get_by_role("button", name="Log in", exact=True).click()
-    page.wait_for_timeout(DEFAULT_TIMEOUT)
+    page.wait_for_timeout(DEFAULT_TIMEOUT * 5)
 
 
 def unfollow_cycle(page: Page, iterations=10) -> None:
@@ -95,7 +93,7 @@ def whoami(page: Page) -> None:
     if not logs in
     """
     logging.info("Checking if user is logged in")
-    if page.query_selector("button:has-text('Log In')"):
+    if page.get_by_text("Log In"):
         login(page)
     else:
         visit_profile(page)
@@ -131,7 +129,7 @@ if __name__ == "__main__":
 
     with sync_playwright() as p:
         browser = p.chromium.launch_persistent_context(
-            user_data_dir="instagram_unfollower",
+            user_data_dir="instagram_unfollower45",
             headless=True,
         )
         page = browser.new_page()
